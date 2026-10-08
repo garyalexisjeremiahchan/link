@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — FCC URL Shortener</title>
+    <link rel="icon" type="image/svg+xml" href="/static/brand/fcc-app-icon-light.svg">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Chart.js for 30-day and 12-month analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="header">
+        <div class="header-container">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <a href="/" class="brand-logo-wrap">
+                    <img class="brand-logo light-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="Free Community Church">
+                    <img class="brand-logo dark-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="Free Community Church">
+                    <span class="brand-badge">Links</span>
+                </a>
+
+                <!-- Desktop Nav Tabs -->
+                <nav class="nav-tabs">
+                    <div class="nav-tab active" data-tab="links" onclick="switchMainTab('links')">Links</div>
+                    <div class="nav-tab" data-tab="analytics" onclick="switchMainTab('analytics')">Analytics</div>
+                    {% if user.is_admin %}
+                    <div class="nav-tab" data-tab="team" onclick="switchMainTab('team')">Team & Users</div>
+                    {% endif %}
+                </nav>
+            </div>
+
+            <!-- Domain Switcher (Desktop) -->
+            <div class="header-domain-switcher domain-switcher" id="domainSwitcherDesktop">
+                <!-- Populated via JS -->
+            </div>
+
+            <!-- Header Actions -->
+            <div class="header-actions">
+                <button class="btn btn-primary btn-sm" onclick="openCreateModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New link
+                </button>
+
+                <!-- Theme Switcher -->
+                <button class="btn btn-ghost btn-sm" onclick="toggleTheme()" title="Toggle Light/Dark Theme" style="padding: 6px;">
+                    <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+
+                <!-- User Profile Dropdown -->
+                <div class="user-profile" onclick="toggleUserMenu(event)">
+                    {% if user.avatar_url %}
+                    <img class="user-avatar" src="{{ user.avatar_url }}" alt="{{ user.name }}">
+                    {% else %}
+                    <div class="user-avatar">{{ user.email[0].upper() }}</div>
+                    {% endif %}
+                    <span style="font-weight: 700; font-size: 13px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ user.name or user.email.split('@')[0] }}
+                    </span>
+                </div>
+
+                <!-- Hamburger Button (Mobile) -->
+                <button class="hamburger-btn" onclick="toggleMobileDrawer()" aria-label="Toggle Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer" onclick="closeMobileDrawerOnBackdrop(event)">
+        <div class="mobile-drawer-panel">
+            <div class="mobile-drawer-header">
+                <img class="brand-logo light-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="FCC" style="height: 24px;">
+                <img class="brand-logo dark-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="FCC" style="height: 24px;">
+                <button class="btn btn-ghost btn-sm" onclick="toggleMobileDrawer()" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- Mobile Domain Switcher -->
+            <div style="margin-bottom: 20px;">
+                <label class="form-label">Domain Scope</label>
+                <div class="domain-switcher" id="domainSwitcherMobile" style="display: flex; flex-direction: column; width: 100%;">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <!-- Mobile Nav Links -->
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                <button class="btn btn-secondary" style="justify-content: flex-start;" onclick="switchMainTab('links'); toggleMobileDrawer();">
+                    Links Manager
+                </button>
+                <button class="btn btn-secondary" style="justify-content: flex-start;" onclick="switchMainTab('analytics'); toggleMobileDrawer();">
+                    Analytics Overview
+                </button>
+                {% if user.is_admin %}
+                <button class="btn btn-secondary" style="justify-content: flex-start;" onclick="switchMainTab('team'); toggleMobileDrawer();">
+                    Team & Users
+                </button>
+                {% endif %}
+                <button class="btn btn-primary" onclick="openCreateModal(); toggleMobileDrawer();">
+                    + Create New Link
+                </button>
+            </div>
+
+            <!-- Mobile User Info & Sign Out -->
+            <div style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--color-border);">
+                <div style="font-size: 13px; font-weight: 700; color: var(--color-text);">{{ user.email }}</div>
+                <div style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 12px;">Role: {{ user.role.title() }}</div>
+                <a class="btn btn-sm btn-secondary" style="width: 100%;" href="/auth/logout">Sign Out</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        <!-- Tab 1: Links View -->
+        <section id="tabContentLinks">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h1 class="section-title">branded links</h1>
+                    <p class="section-subtitle" id="linksCountSubtitle">Loading links...</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary btn-sm" onclick="openImportModal()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Import CSV
+                    </button>
+                    <a class="btn btn-secondary btn-sm" href="/api/links/export-csv">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Export CSV
+                    </a>
+                </div>
+            </div>
+
+            <!-- Toolbar / Search -->
+            <div class="toolbar">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search by slug, title or destination URL..." oninput="handleSearchInput()">
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span style="font-size: 13px; color: var(--color-text-muted);">Sort:</span>
+                    <select id="sortSelect" class="form-select" style="width: auto; padding: 4px 10px; font-size: 13px;" onchange="renderLinksList()">
+                        <option value="latest">Latest</option>
+                        <option value="clicks">Most Clicks</option>
+                        <option value="slug">Slug (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Links Table / Card Container -->
+            <div class="table-card">
+                <table class="links-table">
+                    <thead>
+                        <tr>
+                            <th>Branded Link</th>
+                            <th>Clicks</th>
+                            <th>Created</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="linksTableBody">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Tab 2: Analytics Overview View -->
+        <section id="tabContentAnalytics" style="display: none;">
+            <h1 class="section-title">click performance</h1>
+            <p class="section-subtitle">Aggregated click trends across all managed short links</p>
+
+            <div class="stats-grid" id="analyticsOverviewStats">
+                <!-- Overview stats populated via JS -->
+            </div>
+
+            <div class="table-card" style="padding: 24px; margin-bottom: 24px;">
+                <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 16px; color: var(--color-text-heading);">Top Performing Short Links</h3>
+                <div id="topLinksList">
+                    <!-- Top links populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab 3: Team & Users View (Admin only) -->
+        {% if user.is_admin %}
+        <section id="tabContentTeam" style="display: none;">
+            <h1 class="section-title">church team & approvals</h1>
+            <p class="section-subtitle">Manage user approvals, roles, and allowed domain access</p>
+
+            <div class="table-card" style="margin-bottom: 30px;">
+                <div style="padding: 14px 16px; background-color: var(--color-surface-sunken); border-bottom: 1px solid var(--color-border); font-weight: 800;">
+                    User Directory & Roles
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="links-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Allowed Domains</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teamTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+    </main>
+
+    <!-- =========================================================================
+         MODALS
+         ========================================================================= -->
+
+    <!-- Modal 1: Create / Edit Short Link -->
+    <div class="modal-overlay" id="linkModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title" id="linkModalTitle">Create Branded Link</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeLinkModal()" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="linkForm" onsubmit="handleLinkSubmit(event)">
+                <input type="hidden" id="linkFormId" value="">
+
+                <div class="form-group">
+                    <label class="form-label">Domain</label>
+                    <select id="linkFormDomain" class="form-select" required>
+                        <!-- Populated via JS based on allowed domains -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Destination URL</label>
+                    <input type="url" id="linkFormDestination" class="form-input" placeholder="https://example.com/long-page-url" required onblur="handleDestinationBlur()">
+                    <span style="font-size: 12px; color: var(--color-text-muted);" id="scrapeStatusText"></span>
+                </div>
+
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label class="form-label" style="margin: 0;">Back-half (Slug)</label>
+                        <button type="button" class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size: 12px;" onclick="generateSlugClick()">Random Slug</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-weight: 700; color: var(--color-text-muted);" id="slugPrefixDomain">fcc.li/</span>
+                        <input type="text" id="linkFormSlug" class="form-input" placeholder="album, zoom, volunteer..." required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Title (Optional)</label>
+                    <input type="text" id="linkFormTitle" class="form-input" placeholder="Descriptive title for dashboard">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="linkFormNotes" class="form-textarea" rows="2" placeholder="Internal notes (e.g. used on print bulletin)"></textarea>
+                </div>
+
+                <!-- UTM Builder Toggle -->
+                <div style="margin-bottom: 16px;">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="toggleUtmBuilder()" style="padding: 4px 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        UTM Builder (Google Analytics)
+                    </button>
+                    <div id="utmBuilderFields" style="display: none; padding: 12px; background: var(--color-surface-sunken); border-radius: var(--radius-sm); margin-top: 8px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" id="utmSource" class="form-input" placeholder="utm_source (e.g. bulletin)">
+                            <input type="text" id="utmMedium" class="form-input" placeholder="utm_medium (e.g. print)">
+                        </div>
+                        <input type="text" id="utmCampaign" class="form-input" placeholder="utm_campaign (e.g. anniversary_2026)" style="margin-bottom: 8px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="applyUtmToDestination()">Apply to Destination URL</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeLinkModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="linkFormSubmitBtn">Save Link</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: QR Code Viewer & Download -->
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal-box" style="text-align: center; max-width: 440px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="qrModalTitle">QR Code</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeQrModal()" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div style="background: #FFFFFF; padding: 20px; border-radius: var(--radius-md); display: inline-block; margin: 12px auto 20px; box-shadow: var(--shadow-1);">
+                <img id="qrModalImg" src="" alt="QR Code" style="width: 220px; height: 220px; display: block;">
+            </div>
+            <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;" id="qrModalUrlText"></div>
+            <div style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 24px;">Scan with any smartphone camera to open link</div>
+
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <a id="qrDownloadPngBtn" class="btn btn-primary btn-sm" href="" download>Download PNG</a>
+                <a id="qrDownloadSvgBtn" class="btn btn-secondary btn-sm" href="" download>Download SVG (Vector)</a>
+                <button class="btn btn-secondary btn-sm" onclick="copyCurrentQrUrl()">Copy Short Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Link Analytics Report (30d / 12m) -->
+    <div class="modal-overlay" id="analyticsModal">
+        <div class="modal-box" style="max-width: 760px;">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title" id="analyticsModalTitle">Link Analytics</h3>
+                    <div style="font-size: 13px; color: var(--color-text-muted);" id="analyticsModalUrl"></div>
+                </div>
+                <button class="btn btn-ghost btn-sm" onclick="closeAnalyticsModal()" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- Performance Stats Grid -->
+            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+                <div class="stat-card" style="padding: 14px;">
+                    <div class="stat-label">Total Clicks</div>
+                    <div class="stat-num" id="statModalTotal">-</div>
+                </div>
+                <div class="stat-card" style="padding: 14px;">
+                    <div class="stat-label">QR Scans</div>
+                    <div class="stat-num" id="statModalQr">-</div>
+                </div>
+                <div class="stat-card" style="padding: 14px;">
+                    <div class="stat-label">Direct Clicks</div>
+                    <div class="stat-num" id="statModalDirect">-</div>
+                </div>
+                <div class="stat-card" style="padding: 14px;">
+                    <div class="stat-label">Clicks Today</div>
+                    <div class="stat-num" id="statModalToday">-</div>
+                </div>
+            </div>
+
+            <!-- Time Filter Buttons -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted);">
+                    Click Trends
+                </span>
+                <div class="domain-switcher">
+                    <button class="domain-pill active" id="btnPeriod30d" onclick="switchAnalyticsPeriod('30d')">Past 30 Days</button>
+                    <button class="domain-pill" id="btnPeriod12m" onclick="switchAnalyticsPeriod('12m')">Past 12 Months</button>
+                </div>
+            </div>
+
+            <!-- Chart Canvas -->
+            <div style="background: var(--color-surface-sunken); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 20px; height: 260px;">
+                <canvas id="analyticsChartCanvas"></canvas>
+            </div>
+
+            <!-- Device Breakdown -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="background: var(--color-surface-sunken); padding: 14px; border-radius: var(--radius-sm);">
+                    <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">Devices</div>
+                    <div id="deviceBreakdownList" style="font-size: 13px; color: var(--color-text-muted);"></div>
+                </div>
+                <div style="background: var(--color-surface-sunken); padding: 14px; border-radius: var(--radius-sm);">
+                    <div style="font-weight: 700; font-size: 13px; margin-bottom: 8px;">Top Referrers</div>
+                    <div id="referrerBreakdownList" style="font-size: 13px; color: var(--color-text-muted);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Rebrandly CSV Importer -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-box" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Import Rebrandly CSV</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeImportModal()" style="padding: 4px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <p style="font-size: 13px; color: var(--color-text-muted); margin-bottom: 20px; line-height: 1.5;">
+                Upload a CSV export from Rebrandly.com. Columns recognized: <code>Domain</code>, <code>Slashtag</code> / <code>Slug</code>, <code>Destination URL</code>, <code>Title</code>, and <code>Clicks</code>.
+            </p>
+            <form onsubmit="handleImportSubmit(event)">
+                <div class="form-group">
+                    <input type="file" id="importCsvFileInput" accept=".csv" class="form-input" required>
+                </div>
+                <div id="importResultAlert" style="display: none; padding: 12px; border-radius: 4px; font-size: 13px; margin-bottom: 16px;"></div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Close</button>
+                    <button type="submit" class="btn btn-primary" id="importSubmitBtn">Import Links</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastNotification" style="position: fixed; bottom: 24px; right: 24px; background: var(--ink-950); color: #FFFFFF; padding: 12px 20px; border-radius: var(--radius-pill); font-weight: 700; font-size: 14px; box-shadow: var(--shadow-3); z-index: 9999; display: none; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#24704A" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toastMessage">Copied to clipboard</span>
+    </div>
+
+    <!-- Inject User Info from Server -->
+    <script>
+        window.CURRENT_USER = {
+            id: {{ user.id }},
+            email: "{{ user.email }}",
+            name: "{{ user.name or '' }}",
+            role: "{{ user.role }}",
+            is_admin: {{ 'true' if user.is_admin else 'false' }},
+            is_superadmin: {{ 'true' if user.is_superadmin else 'false' }},
+            allowed_domains: {{ user_domains | tojson }}
+        };
+    </script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

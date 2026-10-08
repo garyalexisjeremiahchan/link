@@ -1,0 +1,25 @@
+# FCC Link — Deployment Compose for the shared Azure VM (4.193.171.7).
+#
+# Runs alongside Pentecost, Uplift Track, and Gas Expense by joining the existing
+# 'pentecost_default' Docker network. The shared nginx container (pentecost-nginx-1)
+# reverse-proxies link.gajc.site (and short domains fcc.li, amp.ad) to this container by name.
+#
+# No host ports are published — nginx reaches us over the internal Docker network.
+#
+# Usage (on the VM, from ~/apps/fcc.li):
+#   docker compose build && docker compose up -d
+
+services:
+  web:
+    build: .
+    container_name: fcc-li-web
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    networks:
+      - pentecost_default
+
+networks:
+  pentecost_default:
+    external: true
