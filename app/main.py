@@ -59,9 +59,9 @@ async def index_root(
     # Management Domain: link.gajc.site (and local dev)
     if not user:
         return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
+            request=request,
+            name="login.html",
+            context={
                 "dev_mode": settings.DEV_AUTH_BYPASS,
                 "superadmin_email": settings.DEFAULT_SUPERADMIN,
                 "pending": False,
@@ -71,9 +71,9 @@ async def index_root(
 
     if user.status == "pending":
         return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
+            request=request,
+            name="login.html",
+            context={
                 "dev_mode": False,
                 "superadmin_email": settings.DEFAULT_SUPERADMIN,
                 "pending": True,
@@ -83,9 +83,9 @@ async def index_root(
 
     if user.status != "approved":
         return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
+            request=request,
+            name="login.html",
+            context={
                 "dev_mode": False,
                 "superadmin_email": settings.DEFAULT_SUPERADMIN,
                 "pending": False,
@@ -101,9 +101,9 @@ async def index_root(
         user_domains = [d.name for d in user.domains]
 
     return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="dashboard.html",
+        context={
             "user": user,
             "user_domains": user_domains
         }
@@ -119,9 +119,9 @@ async def login_page(
         return RedirectResponse(url="/")
 
     return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
+        request=request,
+        name="login.html",
+        context={
             "dev_mode": settings.DEV_AUTH_BYPASS,
             "superadmin_email": settings.DEFAULT_SUPERADMIN,
             "pending": user.status == "pending" if user else False,

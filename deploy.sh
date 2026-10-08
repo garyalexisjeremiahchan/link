@@ -33,21 +33,22 @@ git archive --format=tar.gz HEAD | ssh "$VM" \
 echo "=== [4/6] Setting up environment and data directories ==="
 ssh "$VM" "
   mkdir -p $REMOTE_DIR/data
+  chmod 777 $REMOTE_DIR/data
   if [[ ! -f $REMOTE_DIR/.env ]]; then
-    SECRET=\$(openssl rand -hex 32 2>/dev/null || python3 -c 'import secrets; print(secrets.token_hex(32))')
+    SECRET=\$(python3 -c 'import secrets; print(secrets.token_hex(32))')
     cat <<EOF > $REMOTE_DIR/.env
 APP_NAME=FCC Link
 PORTAL_DOMAIN=link.gajc.site
 MANAGED_DOMAINS=fcc.li,amp.ad,link.gajc.site
 DEFAULT_SUPERADMIN=freecommunitychurchsingapore@gmail.com
-DATABASE_URL=sqlite+aiosqlite:///data/app.db
-SECRET_KEY=\$SECRET
+DATABASE_URL=sqlite+aiosqlite:////app/data/app.db
+SECRET_KEY=\${SECRET}
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=https://link.gajc.site/auth/callback
 DEV_AUTH_BYPASS=true
 EOF
-    echo 'Created initial .env with generated SECRET_KEY (DEV_AUTH_BYPASS=true).'
+    echo 'Created initial .env with generated SECRET_KEY.'
   fi
 "
 
