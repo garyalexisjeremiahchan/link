@@ -4,7 +4,8 @@ import re
 import secrets
 import string
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, UploadFile, File
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks, UploadFile, File, Body
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -341,6 +342,95 @@ async def import_rebrandly_csv(
 
     await db.commit()
     return {"imported": imported_count, "skipped": skipped_count}
+
+@router.post("/sync-rebrandly")
+async def sync_rebrandly_api(
+    payload: dict = Body(...),
+    user: User = Depends(require_approved_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Directly fetch and import all links using a Rebrandly API Key."""
+    api_key = payload.get("api_key", "").strip()
+    if not api_key:
+        raise HTTPException(status_code=400, detail="Rebrandly API Key is required")
+
+    imported_count = 0
+    skipped_count = 0
+    total_found = 0
+
+    dom_res = await db.execute(select(Domain))
+    domains_by_name = {d.name.lower(): d for d in dom_res.scalars().all()}
+    user_allowed_domain_ids = {d.id for d in user.domains} if not user.is_superadmin else None
+
+    last_id = None
+    headers = {"apikey": api_key}
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        while True:
+            params = {"limit": "100", "orderBy": "createdAt", "orderDir": "desc"}
+            if last_id:
+                params["last"] = last_id
+
+            try:
+                resp = await client.get("https://api.rebrandly.com/v1/links", headers=headers, params=params)
+                if resp.status_code in (401, 403):
+                    raise HTTPException(status_code=400, detail="Invalid Rebrandly API Key. Please verify your key in Rebrandly Account Settings.")
+                resp.raise_for_status()
+                data = resp.json()
+            except httpx.HTTPError as e:
+                raise HTTPException(status_code=400, detail=f"Rebrandly API error: {str(e)}")
+
+            if not data or not isinstance(data, list):
+                break
+
+            total_found += len(data)
+
+            for item in data:
+                domain_info = item.get("domain") or {}
+                dom_name = (domain_info.get("fullName") or "fcc.li").strip().lower()
+                slug = sanitize_slug(item.get("slashtag") or "")
+                destination = (item.get("destination") or "").strip()
+                title = (item.get("title") or "").strip()
+                clicks = item.get("clicks") or 0
+
+                if not slug or not destination:
+                    skipped_count += 1
+                    continue
+
+                domain = domains_by_name.get(dom_name)
+                if not domain:
+                    skipped_count += 1
+                    continue
+
+                if user_allowed_domain_ids is not None and domain.id not in user_allowed_domain_ids:
+                    skipped_count += 1
+                    continue
+
+                existing = await db.execute(
+                    select(ShortLink).where(ShortLink.domain_id == domain.id, ShortLink.slug == slug)
+                )
+                if existing.scalar_one_or_none():
+                    skipped_count += 1
+                    continue
+
+                link = ShortLink(
+                    domain_id=domain.id,
+                    slug=slug,
+                    destination_url=destination,
+                    title=title or slug,
+                    total_clicks=clicks,
+                    is_active=True,
+                    created_by_user_id=user.id
+                )
+                db.add(link)
+                imported_count += 1
+
+            if len(data) < 100:
+                break
+            last_id = data[-1].get("id")
+
+    await db.commit()
+    return {"imported": imported_count, "skipped": skipped_count, "total": total_found}
 
 @router.get("/export-csv")
 async def export_links_csv(

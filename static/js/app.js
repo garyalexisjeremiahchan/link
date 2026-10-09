@@ -974,3 +974,133 @@ function applyUtmToDestination() {
         alert('Please enter a valid Destination URL first');
     }
 }
+
+// --------------------------------------------------------------------------
+// Rebrandly Importer / Direct Sync Modal
+// --------------------------------------------------------------------------
+function openImportModal() {
+    const modal = document.getElementById('importModal');
+    if (!modal) return;
+    const alertBox = document.getElementById('importResultAlert');
+    if (alertBox) {
+        alertBox.style.display = 'none';
+        alertBox.textContent = '';
+    }
+    const keyInput = document.getElementById('rebrandlyApiKeyInput');
+    if (keyInput) keyInput.value = '';
+    const fileInput = document.getElementById('importCsvFileInput');
+    if (fileInput) fileInput.value = '';
+    modal.classList.add('open');
+}
+
+function closeImportModal() {
+    const modal = document.getElementById('importModal');
+    if (modal) modal.classList.remove('open');
+}
+
+async function handleRebrandlySync(e) {
+    if (e) e.preventDefault();
+    const keyInput = document.getElementById('rebrandlyApiKeyInput');
+    const syncBtn = document.getElementById('syncRebrandlyBtn');
+    const alertBox = document.getElementById('importResultAlert');
+    if (!keyInput || !keyInput.value.trim()) return;
+
+    const apiKey = keyInput.value.trim();
+    if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.textContent = 'Syncing...';
+    }
+    if (alertBox) {
+        alertBox.style.display = 'none';
+    }
+
+    try {
+        const res = await fetch('/api/links/sync-rebrandly', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ api_key: apiKey })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || 'Failed to sync with Rebrandly');
+        }
+
+        if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#ECFDF5';
+            alertBox.style.color = '#065F46';
+            alertBox.style.border = '1px solid #A7F3D0';
+            alertBox.textContent = `Sync completed! Imported: ${data.imported}, Skipped (existing/unauthorized): ${data.skipped}, Total processed from Rebrandly: ${data.total}`;
+        }
+        showToast(`Imported ${data.imported} links from Rebrandly!`);
+        loadLinks();
+    } catch (err) {
+        if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#FEF2F2';
+            alertBox.style.color = '#991B1B';
+            alertBox.style.border = '1px solid #FECACA';
+            alertBox.textContent = `Error: ${err.message}`;
+        }
+    } finally {
+        if (syncBtn) {
+            syncBtn.disabled = false;
+            syncBtn.textContent = 'Sync All Links';
+        }
+    }
+}
+
+async function handleImportSubmit(e) {
+    if (e) e.preventDefault();
+    const fileInput = document.getElementById('importCsvFileInput');
+    const submitBtn = document.getElementById('importSubmitBtn');
+    const alertBox = document.getElementById('importResultAlert');
+    if (!fileInput || !fileInput.files.length) return;
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading...';
+    }
+    if (alertBox) {
+        alertBox.style.display = 'none';
+    }
+
+    try {
+        const res = await fetch('/api/links/import-csv', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || 'Failed to upload CSV');
+        }
+
+        if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#ECFDF5';
+            alertBox.style.color = '#065F46';
+            alertBox.style.border = '1px solid #A7F3D0';
+            alertBox.textContent = `CSV import successful! Created: ${data.created_count}, Skipped: ${data.skipped_count}`;
+        }
+        showToast(`Imported ${data.created_count} links`);
+        loadLinks();
+    } catch (err) {
+        if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = '#FEF2F2';
+            alertBox.style.color = '#991B1B';
+            alertBox.style.border = '1px solid #FECACA';
+            alertBox.textContent = `Error: ${err.message}`;
+        }
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Upload CSV';
+        }
+    }
+}
+
