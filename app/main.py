@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -28,6 +29,16 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="URL Shortener and Link Intelligence Platform for fcc.li and amp.ad",
     lifespan=lifespan
+)
+
+# Session Middleware required by Authlib for OAuth 2.0 state/nonce persistence
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    session_cookie="fcc_oauth_session",
+    max_age=1800,
+    same_site="lax",
+    https_only=False,
 )
 
 # Mount static files
