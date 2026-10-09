@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     
     APP_NAME: str = "FCC Link"
     PORTAL_DOMAIN: str = "link.gajc.site"
-    MANAGED_DOMAINS: str = "fcc.li,amp.ad,link.gajc.site"
+    MANAGED_DOMAINS: str = "fcc.li,amp.ad"
     DEFAULT_SUPERADMIN: str = "freecommunitychurchsingapore@gmail.com"
     DATABASE_URL: str = "sqlite+aiosqlite:///./data/app.db"
     SECRET_KEY: str = os.getenv("SECRET_KEY", "fcc-link-session-secret-key-2026-very-secure")

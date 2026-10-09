@@ -145,7 +145,9 @@ async def list_domains(
     admin: User = Depends(require_admin_user),
     db: AsyncSession = Depends(get_db)
 ):
-    res = await db.execute(select(Domain).order_by(Domain.name.asc()))
+    res = await db.execute(
+        select(Domain).where(Domain.name.in_(settings.domain_list)).order_by(Domain.name.asc())
+    )
     domains = res.scalars().all()
     return [
         {

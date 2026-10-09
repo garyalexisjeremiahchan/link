@@ -95,10 +95,12 @@ async def index_root(
 
     # User is approved: show Dashboard
     if user.is_superadmin:
-        all_doms_res = await db.execute(select(Domain))
+        all_doms_res = await db.execute(
+            select(Domain).where(Domain.is_active == True, Domain.name.in_(settings.domain_list))
+        )
         user_domains = [d.name for d in all_doms_res.scalars().all()]
     else:
-        user_domains = [d.name for d in user.domains]
+        user_domains = [d.name for d in user.domains if d.is_active and d.name in settings.domain_list]
 
     return templates.TemplateResponse(
         request=request,

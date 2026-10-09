@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy import event, select
+from sqlalchemy import event, select, delete
 from app.config import settings
 from app.models import Base, Domain, User, UserDomain
 
@@ -57,6 +57,16 @@ async def init_db():
                 
                 domain = Domain(name=domain_name, is_active=True, root_redirect_url=root_redirect)
                 session.add(domain)
+
+        # Remove or clean up unmanaged or portal domains (e.g. link.gajc.site)
+        unmanaged_res = await session.execute(
+            select(Domain).where(~Domain.name.in_(settings.domain_list))
+        )
+        for unmanaged_dom in unmanaged_res.scalars().all():
+            await session.execute(
+                delete(UserDomain).where(UserDomain.domain_id == unmanaged_dom.id)
+            )
+            await session.delete(unmanaged_dom)
         await session.commit()
         
         # 2. Seed Default Super Admin

@@ -39,7 +39,7 @@ ssh "$VM" "
     cat <<EOF > $REMOTE_DIR/.env
 APP_NAME=FCC Link
 PORTAL_DOMAIN=link.gajc.site
-MANAGED_DOMAINS=fcc.li,amp.ad,link.gajc.site
+MANAGED_DOMAINS=fcc.li,amp.ad
 DEFAULT_SUPERADMIN=freecommunitychurchsingapore@gmail.com
 DATABASE_URL=sqlite+aiosqlite:////app/data/app.db
 SECRET_KEY=\${SECRET}

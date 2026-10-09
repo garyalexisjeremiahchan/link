@@ -74,37 +74,46 @@ function closeMobileDrawerOnBackdrop(e) {
 // Domain Switcher
 // --------------------------------------------------------------------------
 function initDomainSwitcher() {
-    const allowed = (window.CURRENT_USER && window.CURRENT_USER.allowed_domains) || ['fcc.li', 'amp.ad'];
+    let allowed = (window.CURRENT_USER && window.CURRENT_USER.allowed_domains) || ['fcc.li', 'amp.ad'];
+    // Filter out portal domain or staging hosts so ONLY short link domains exist
+    allowed = allowed.filter(d => d === 'fcc.li' || d === 'amp.ad');
+    if (allowed.length === 0) allowed = ['fcc.li', 'amp.ad'];
+
     const desktopEl = document.getElementById('domainSwitcherDesktop');
     const mobileEl = document.getElementById('domainSwitcherMobile');
     const formSelect = document.getElementById('linkFormDomain');
 
-    // Build pill buttons
-    let pillsHtml = '';
-    if (allowed.length > 1 || window.CURRENT_USER.is_superadmin) {
-        pillsHtml += `<button class="domain-pill active" data-domain="all" onclick="selectDomain('all')">All Domains</button>`;
+    // Default selection
+    if (!state.currentDomain || (state.currentDomain !== 'all' && !allowed.includes(state.currentDomain))) {
+        state.currentDomain = allowed.length === 1 ? allowed[0] : 'all';
     }
 
-    allowed.forEach((dom, index) => {
-        const isFirst = (allowed.length === 1 && index === 0);
-        const activeClass = isFirst ? 'active' : '';
+    // Build pill buttons
+    let pillsHtml = '';
+    if (allowed.length > 1 || (window.CURRENT_USER && window.CURRENT_USER.is_superadmin)) {
+        const allActive = state.currentDomain === 'all' ? 'active' : '';
+        pillsHtml += `<button class="domain-pill ${allActive}" data-domain="all" onclick="selectDomain('all')">All Domains</button>`;
+    }
+
+    allowed.forEach(dom => {
+        const activeClass = state.currentDomain === dom ? 'active' : '';
         pillsHtml += `<button class="domain-pill ${activeClass}" data-domain="${dom}" onclick="selectDomain('${dom}')">${dom}</button>`;
     });
 
     if (desktopEl) desktopEl.innerHTML = pillsHtml;
     if (mobileEl) mobileEl.innerHTML = pillsHtml;
 
-    // Default selection
-    if (allowed.length === 1) {
-        state.currentDomain = allowed[0];
-    } else {
-        state.currentDomain = 'all';
-    }
     updateBrandBranding(state.currentDomain);
 
     // Populate create modal domain dropdown
     if (formSelect) {
         formSelect.innerHTML = allowed.map(d => `<option value="${d}">${d}</option>`).join('');
+        if (state.currentDomain === 'amp.ad' || state.currentDomain === 'fcc.li') {
+            formSelect.value = state.currentDomain;
+        }
+        const prefix = document.getElementById('slugPrefixDomain');
+        if (prefix) prefix.textContent = `${formSelect.value}/`;
+
         formSelect.addEventListener('change', () => {
             const prefix = document.getElementById('slugPrefixDomain');
             if (prefix) prefix.textContent = `${formSelect.value}/`;
@@ -122,21 +131,52 @@ function selectDomain(dom) {
 }
 
 function updateBrandBranding(dom) {
-    const isAmplify = dom === 'amp.ad';
+    const isAmplify = (dom === 'amp.ad');
+
+    const brandFCC = document.getElementById('brandFCC');
+    const brandAmplify = document.getElementById('brandAmplify');
+    const drawerFCC = document.getElementById('drawerBrandFCC');
+    const drawerAmplify = document.getElementById('drawerBrandAmplify');
+
     if (isAmplify) {
+        // Show ONLY Amplify in header & drawer
+        if (brandFCC) brandFCC.style.display = 'none';
+        if (brandAmplify) brandAmplify.style.display = 'inline-flex';
+        if (drawerFCC) drawerFCC.style.display = 'none';
+        if (drawerAmplify) drawerAmplify.style.display = 'inline-flex';
         document.body.classList.add('domain-amplify');
     } else {
+        // Show ONLY Free Community Church in header & drawer
+        if (brandFCC) brandFCC.style.display = 'inline-flex';
+        if (brandAmplify) brandAmplify.style.display = 'none';
+        if (drawerFCC) drawerFCC.style.display = 'inline-flex';
+        if (drawerAmplify) drawerAmplify.style.display = 'none';
         document.body.classList.remove('domain-amplify');
+
+        const fccBadge = document.getElementById('brandBadgeFCC');
+        if (fccBadge) {
+            fccBadge.textContent = (dom === 'fcc.li') ? 'fcc.li' : 'All Domains';
+        }
     }
 
-    const badge = document.getElementById('brandBadge');
-    if (badge) {
-        badge.textContent = isAmplify ? 'amp.ad' : (dom === 'fcc.li' ? 'fcc.li' : 'Links');
-    }
-
+    // Update section title in body
     const titleEl = document.getElementById('brandedLinksTitle');
     if (titleEl) {
-        titleEl.textContent = isAmplify ? 'amp.ad links' : (dom === 'fcc.li' ? 'fcc.li links' : 'branded links');
+        if (isAmplify) {
+            titleEl.textContent = 'amp.ad links';
+        } else if (dom === 'fcc.li') {
+            titleEl.textContent = 'fcc.li links';
+        } else {
+            titleEl.textContent = 'all branded links';
+        }
+    }
+
+    // Sync create modal domain selector with selected domain
+    const formSelect = document.getElementById('linkFormDomain');
+    if (formSelect && (dom === 'amp.ad' || dom === 'fcc.li')) {
+        formSelect.value = dom;
+        const prefix = document.getElementById('slugPrefixDomain');
+        if (prefix) prefix.textContent = dom + '/';
     }
 }
 
@@ -216,25 +256,38 @@ function renderLinksList() {
     }
 
     if (displayLinks.length === 0) {
-        const isAmplify = state.currentDomain === 'amp.ad';
+        const isAmplify = (state.currentDomain === 'amp.ad');
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         let emptyIconSrc = '';
+        let emptyTitle = '';
+        let emptySubtitle = '';
+
         if (isAmplify) {
             emptyIconSrc = isDark 
                 ? '/static/brand/amplify/amplify-circle-dark.png' 
                 : '/static/brand/amplify/amplify-circle.png';
+            emptyTitle = 'No amp.ad links found';
+            emptySubtitle = 'Create a new Amplify link or import existing links';
+        } else if (state.currentDomain === 'fcc.li') {
+            emptyIconSrc = isDark 
+                ? '/static/brand/fcc-dove-dark.svg' 
+                : '/static/brand/fcc-dove-light.svg';
+            emptyTitle = 'No fcc.li links found';
+            emptySubtitle = 'Create a new FCC link or import existing links from Rebrandly';
         } else {
             emptyIconSrc = isDark 
                 ? '/static/brand/fcc-dove-dark.svg' 
                 : '/static/brand/fcc-dove-light.svg';
+            emptyTitle = 'No short links found';
+            emptySubtitle = 'Create a new link or import existing links from Rebrandly';
         }
 
         tbody.innerHTML = `
             <tr>
                 <td colspan="4" style="text-align: center; padding: 48px 20px; color: var(--color-text-muted);">
-                    <img src="${emptyIconSrc}" style="width: 52px; height: 52px; opacity: 0.7; margin-bottom: 14px;" alt="">
-                    <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px; color: var(--color-text-heading);">No short links found</div>
-                    <div style="font-size: 13px;">Create a new link or import existing links from Rebrandly</div>
+                    <img src="${emptyIconSrc}" style="width: 52px; height: 52px; opacity: 0.85; margin-bottom: 14px; object-fit: contain;" alt="">
+                    <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px; color: var(--color-text-heading);">${emptyTitle}</div>
+                    <div style="font-size: 13px;">${emptySubtitle}</div>
                 </td>
             </tr>
         `;

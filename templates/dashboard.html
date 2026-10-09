@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — FCC URL Shortener</title>
     <link rel="icon" type="image/svg+xml" href="/static/brand/fcc-app-icon-light.svg">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css?v=2.2">
     <!-- Chart.js for 30-day and 12-month analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
@@ -15,13 +15,19 @@
         <div class="header-container">
             <div style="display: flex; align-items: center; gap: 20px;">
                 <a href="/" class="brand-logo-wrap">
-                    <!-- FCC Logos -->
-                    <img class="brand-logo light-only fcc-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="Free Community Church">
-                    <img class="brand-logo dark-only fcc-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="Free Community Church">
-                    <!-- Amplify Logos (for amp.ad) -->
-                    <img class="brand-logo light-only amplify-only" src="/static/brand/amplify/amplify-horizontal.png" alt="Amplify Asia Pacific">
-                    <img class="brand-logo dark-only amplify-only" src="/static/brand/amplify/amplify-horizontal-dark.png" alt="Amplify Asia Pacific">
-                    <span class="brand-badge" id="brandBadge">Links</span>
+                    <!-- Free Community Church Brand Group (fcc.li / All Domains) -->
+                    <div id="brandFCC" class="brand-entity">
+                        <img class="brand-logo logo-light" src="/static/brand/fcc-A-horizontal-light.svg" alt="Free Community Church">
+                        <img class="brand-logo logo-dark" src="/static/brand/fcc-A-horizontal-dark.svg" alt="Free Community Church">
+                        <span class="brand-badge" id="brandBadgeFCC">fcc.li</span>
+                    </div>
+
+                    <!-- Amplify Asia Pacific Brand Group (amp.ad) -->
+                    <div id="brandAmplify" class="brand-entity" style="display: none;">
+                        <img class="brand-logo logo-light" src="/static/brand/amplify/amplify-horizontal.png" alt="Amplify Asia Pacific">
+                        <img class="brand-logo logo-dark" src="/static/brand/amplify/amplify-horizontal-dark.png" alt="Amplify Asia Pacific">
+                        <span class="brand-badge badge-amplify" id="brandBadgeAmplify">amp.ad</span>
+                    </div>
                 </a>
 
                 <!-- Desktop Nav Tabs -->
@@ -75,11 +81,13 @@
     <div class="mobile-drawer" id="mobileDrawer" onclick="closeMobileDrawerOnBackdrop(event)">
         <div class="mobile-drawer-panel">
             <div class="mobile-drawer-header">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <img class="brand-logo light-only fcc-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="FCC" style="height: 24px;">
-                    <img class="brand-logo dark-only fcc-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="FCC" style="height: 24px;">
-                    <img class="brand-logo light-only amplify-only" src="/static/brand/amplify/amplify-horizontal.png" alt="Amplify" style="height: 24px;">
-                    <img class="brand-logo dark-only amplify-only" src="/static/brand/amplify/amplify-horizontal-dark.png" alt="Amplify" style="height: 24px;">
+                <div id="drawerBrandFCC" class="brand-entity">
+                    <img class="brand-logo logo-light" src="/static/brand/fcc-A-horizontal-light.svg" alt="FCC" style="height: 24px;">
+                    <img class="brand-logo logo-dark" src="/static/brand/fcc-A-horizontal-dark.svg" alt="FCC" style="height: 24px;">
+                </div>
+                <div id="drawerBrandAmplify" class="brand-entity" style="display: none;">
+                    <img class="brand-logo logo-light" src="/static/brand/amplify/amplify-horizontal.png" alt="Amplify" style="height: 24px;">
+                    <img class="brand-logo logo-dark" src="/static/brand/amplify/amplify-horizontal-dark.png" alt="Amplify" style="height: 24px;">
                 </div>
                 <button class="btn btn-ghost btn-sm" onclick="toggleMobileDrawer()" style="padding: 4px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -427,6 +435,6 @@
             allowed_domains: {{ user_domains | tojson }}
         };
     </script>
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=2.2"></script>
 </body>
 </html>

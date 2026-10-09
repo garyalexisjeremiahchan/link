@@ -53,8 +53,8 @@ async def setup_database():
     # Seed domains & default superadmin
     async with TestingSessionLocal() as session:
         # Seed domains
-        for d_name in ["fcc.li", "amp.ad", "link.gajc.site"]:
-            root = "https://freecomchurch.org/" if d_name == "fcc.li" else ("https://amplifyasiapacific.org/" if d_name == "amp.ad" else None)
+        for d_name in ["fcc.li", "amp.ad"]:
+            root = "https://freecomchurch.org/" if d_name == "fcc.li" else "https://amplifyasiapacific.org/"
             session.add(Domain(name=d_name, is_active=True, root_redirect_url=root))
         await session.commit()
 

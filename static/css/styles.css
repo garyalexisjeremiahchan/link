@@ -160,6 +160,12 @@ a:hover {
   text-decoration: none;
 }
 
+.brand-entity {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand-logo {
   height: 28px;
   width: auto;
@@ -167,7 +173,26 @@ a:hover {
   object-fit: contain;
 }
 
-/* Theme-based logo display */
+/* Light / Dark Mode Logo Visibility */
+:root .logo-light,
+[data-theme="light"] .logo-light,
+:root:not([data-theme="dark"]) .logo-light {
+  display: inline-block !important;
+}
+:root .logo-dark,
+[data-theme="light"] .logo-dark,
+:root:not([data-theme="dark"]) .logo-dark {
+  display: none !important;
+}
+
+[data-theme="dark"] .logo-light {
+  display: none !important;
+}
+[data-theme="dark"] .logo-dark {
+  display: inline-block !important;
+}
+
+/* Fallback legacy classes */
 :root .light-only,
 [data-theme="light"] .light-only {
   display: inline-block;
@@ -176,7 +201,6 @@ a:hover {
 [data-theme="light"] .dark-only {
   display: none !important;
 }
-
 [data-theme="dark"] .light-only {
   display: none !important;
 }
@@ -185,9 +209,13 @@ a:hover {
 }
 
 /* Domain-based Brand Switching (FCC vs Amplify) */
+body.domain-amplify #brandFCC,
+body.domain-amplify #drawerBrandFCC,
 body.domain-amplify .fcc-only {
   display: none !important;
 }
+body:not(.domain-amplify) #brandAmplify,
+body:not(.domain-amplify) #drawerBrandAmplify,
 body:not(.domain-amplify) .amplify-only {
   display: none !important;
 }
@@ -206,6 +234,16 @@ body:not(.domain-amplify) .amplify-only {
 [data-theme="dark"] .brand-badge {
   background: #10292A;
   color: var(--teal-300);
+}
+
+.brand-badge.badge-amplify {
+  background: #E3EEF4;
+  color: #186088;
+}
+
+[data-theme="dark"] .brand-badge.badge-amplify {
+  background: #0E2535;
+  color: #7FC4C6;
 }
 
 /* Nav Tabs */
