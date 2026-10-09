@@ -244,7 +244,7 @@ async def get_link_qr_png(
         raise HTTPException(status_code=404, detail="Link not found")
 
     short_url = f"https://{link.domain.name}/{link.slug}?src=qr"
-    png_bytes = generate_qr_png(short_url)
+    png_bytes = generate_qr_png(short_url, domain_name=link.domain.name)
     return Response(
         content=png_bytes,
         media_type="image/png",

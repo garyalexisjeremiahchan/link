@@ -15,9 +15,13 @@
         <div class="header-container">
             <div style="display: flex; align-items: center; gap: 20px;">
                 <a href="/" class="brand-logo-wrap">
-                    <img class="brand-logo light-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="Free Community Church">
-                    <img class="brand-logo dark-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="Free Community Church">
-                    <span class="brand-badge">Links</span>
+                    <!-- FCC Logos -->
+                    <img class="brand-logo light-only fcc-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="Free Community Church">
+                    <img class="brand-logo dark-only fcc-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="Free Community Church">
+                    <!-- Amplify Logos (for amp.ad) -->
+                    <img class="brand-logo light-only amplify-only" src="/static/brand/amplify/amplify-horizontal.png" alt="Amplify Asia Pacific">
+                    <img class="brand-logo dark-only amplify-only" src="/static/brand/amplify/amplify-horizontal-dark.png" alt="Amplify Asia Pacific">
+                    <span class="brand-badge" id="brandBadge">Links</span>
                 </a>
 
                 <!-- Desktop Nav Tabs -->
@@ -37,9 +41,9 @@
 
             <!-- Header Actions -->
             <div class="header-actions">
-                <button class="btn btn-primary btn-sm" onclick="openCreateModal()">
+                <button class="btn btn-primary btn-sm btn-new-link" onclick="openCreateModal()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    New link
+                    <span class="btn-label">New link</span>
                 </button>
 
                 <!-- Theme Switcher -->
@@ -71,8 +75,12 @@
     <div class="mobile-drawer" id="mobileDrawer" onclick="closeMobileDrawerOnBackdrop(event)">
         <div class="mobile-drawer-panel">
             <div class="mobile-drawer-header">
-                <img class="brand-logo light-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="FCC" style="height: 24px;">
-                <img class="brand-logo dark-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="FCC" style="height: 24px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <img class="brand-logo light-only fcc-only" src="/static/brand/fcc-A-horizontal-light.svg" alt="FCC" style="height: 24px;">
+                    <img class="brand-logo dark-only fcc-only" src="/static/brand/fcc-A-horizontal-dark.svg" alt="FCC" style="height: 24px;">
+                    <img class="brand-logo light-only amplify-only" src="/static/brand/amplify/amplify-horizontal.png" alt="Amplify" style="height: 24px;">
+                    <img class="brand-logo dark-only amplify-only" src="/static/brand/amplify/amplify-horizontal-dark.png" alt="Amplify" style="height: 24px;">
+                </div>
                 <button class="btn btn-ghost btn-sm" onclick="toggleMobileDrawer()" style="padding: 4px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -119,7 +127,7 @@
         <section id="tabContentLinks">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
                 <div>
-                    <h1 class="section-title">branded links</h1>
+                    <h1 class="section-title" id="brandedLinksTitle">branded links</h1>
                     <p class="section-subtitle" id="linksCountSubtitle">Loading links...</p>
                 </div>
                 <div style="display: flex; gap: 8px;">

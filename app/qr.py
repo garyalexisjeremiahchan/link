@@ -29,9 +29,10 @@ def generate_qr_png(
     url: str,
     dark_color: tuple = (20, 22, 26),      # ink-950 #14161A
     light_color: tuple = (255, 255, 255),  # white
-    embed_logo: bool = True
+    embed_logo: bool = True,
+    domain_name: str = "fcc.li"
 ) -> bytes:
-    """Generate high-resolution PNG with centered FCC Dove emblem."""
+    """Generate high-resolution PNG with centered brand emblem (FCC Dove or Amplify)."""
     qr = qrcode.QRCode(
         version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -48,8 +49,7 @@ def generate_qr_png(
     ).convert("RGBA")
 
     if embed_logo:
-        # Check if we have raster logo or draw emblem
-        # Create a clean circular badge with FCC Dove in the center
+        # Create a clean circular badge in the center
         badge_size = int(img.size[0] * 0.24)
         badge = Image.new("RGBA", (badge_size, badge_size), (255, 255, 255, 255))
         
@@ -63,11 +63,17 @@ def generate_qr_png(
         border_draw = ImageDraw.Draw(badge)
         border_draw.ellipse((0, 0, badge_size - 1, badge_size - 1), outline=dark_color, width=2)
         
-        # If we have a PNG icon or raster, paste it; otherwise render dove silhouette
-        # Let's draw an elegant Dove Gold dot or load fcc-app-icon if rendered
-        # We can draw stylized wings/cross or paste
+        is_amplify = "amp.ad" in domain_name.lower() or "amplify" in domain_name.lower()
+        amplify_png_path = Path("static/brand/amplify/amplify-circle.png")
         logo_png_path = Path("static/brand/fcc-dove.png")
-        if logo_png_path.exists():
+
+        if is_amplify and amplify_png_path.exists():
+            logo = Image.open(amplify_png_path).convert("RGBA")
+            inner_size = int(badge_size * 0.72)
+            logo = logo.resize((inner_size, inner_size), Image.Resampling.LANCZOS)
+            offset = ((badge_size - inner_size) // 2, (badge_size - inner_size) // 2)
+            badge.paste(logo, offset, logo)
+        elif logo_png_path.exists():
             logo = Image.open(logo_png_path).convert("RGBA")
             inner_size = int(badge_size * 0.75)
             logo = logo.resize((inner_size, inner_size), Image.Resampling.LANCZOS)

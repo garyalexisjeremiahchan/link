@@ -92,11 +92,19 @@
             flex-direction: column;
             gap: 8px;
         }
-    </style>
+    <script>
+        (function() {
+            const saved = localStorage.getItem('fcc_theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
 <body>
     <div class="login-card">
-        <img class="login-logo" src="/static/brand/fcc-dove-light.svg" alt="Free Community Church">
+        <img class="login-logo light-only" src="/static/brand/fcc-dove-light.svg" alt="Free Community Church">
+        <img class="login-logo dark-only" src="/static/brand/fcc-dove-dark.svg" alt="Free Community Church">
         <h1 class="login-title">FCC URL Shortener</h1>
         <p class="login-subtitle">Branded short link management for <strong>fcc.li</strong> & <strong>amp.ad</strong></p>
 

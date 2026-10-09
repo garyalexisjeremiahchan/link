@@ -39,6 +39,7 @@ function toggleTheme() {
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('fcc_theme', next);
     updateThemeIcon(next);
+    renderLinksList();
 }
 
 function updateThemeIcon(theme) {
@@ -99,6 +100,7 @@ function initDomainSwitcher() {
     } else {
         state.currentDomain = 'all';
     }
+    updateBrandBranding(state.currentDomain);
 
     // Populate create modal domain dropdown
     if (formSelect) {
@@ -115,7 +117,27 @@ function selectDomain(dom) {
     document.querySelectorAll('.domain-pill').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-domain') === dom);
     });
+    updateBrandBranding(dom);
     loadLinks();
+}
+
+function updateBrandBranding(dom) {
+    const isAmplify = dom === 'amp.ad';
+    if (isAmplify) {
+        document.body.classList.add('domain-amplify');
+    } else {
+        document.body.classList.remove('domain-amplify');
+    }
+
+    const badge = document.getElementById('brandBadge');
+    if (badge) {
+        badge.textContent = isAmplify ? 'amp.ad' : (dom === 'fcc.li' ? 'fcc.li' : 'Links');
+    }
+
+    const titleEl = document.getElementById('brandedLinksTitle');
+    if (titleEl) {
+        titleEl.textContent = isAmplify ? 'amp.ad links' : (dom === 'fcc.li' ? 'fcc.li links' : 'branded links');
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -194,11 +216,24 @@ function renderLinksList() {
     }
 
     if (displayLinks.length === 0) {
+        const isAmplify = state.currentDomain === 'amp.ad';
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        let emptyIconSrc = '';
+        if (isAmplify) {
+            emptyIconSrc = isDark 
+                ? '/static/brand/amplify/amplify-circle-dark.png' 
+                : '/static/brand/amplify/amplify-circle.png';
+        } else {
+            emptyIconSrc = isDark 
+                ? '/static/brand/fcc-dove-dark.svg' 
+                : '/static/brand/fcc-dove-light.svg';
+        }
+
         tbody.innerHTML = `
             <tr>
                 <td colspan="4" style="text-align: center; padding: 48px 20px; color: var(--color-text-muted);">
-                    <img src="/static/brand/fcc-dove-light.svg" style="width: 48px; height: 48px; opacity: 0.4; margin-bottom: 12px;" alt="">
-                    <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px;">No short links found</div>
+                    <img src="${emptyIconSrc}" style="width: 52px; height: 52px; opacity: 0.7; margin-bottom: 14px;" alt="">
+                    <div style="font-weight: 700; font-size: 16px; margin-bottom: 4px; color: var(--color-text-heading);">No short links found</div>
                     <div style="font-size: 13px;">Create a new link or import existing links from Rebrandly</div>
                 </td>
             </tr>

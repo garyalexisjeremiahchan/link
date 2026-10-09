@@ -163,16 +163,33 @@ a:hover {
 .brand-logo {
   height: 28px;
   width: auto;
+  max-width: 190px;
+  object-fit: contain;
 }
 
-[data-theme="dark"] .brand-logo.light-only {
-  display: none;
-}
-[data-theme="dark"] .brand-logo.dark-only {
+/* Theme-based logo display */
+:root .light-only,
+[data-theme="light"] .light-only {
   display: inline-block;
 }
-body:not([data-theme="dark"]) .brand-logo.dark-only {
-  display: none;
+:root .dark-only,
+[data-theme="light"] .dark-only {
+  display: none !important;
+}
+
+[data-theme="dark"] .light-only {
+  display: none !important;
+}
+[data-theme="dark"] .dark-only {
+  display: inline-block !important;
+}
+
+/* Domain-based Brand Switching (FCC vs Amplify) */
+body.domain-amplify .fcc-only {
+  display: none !important;
+}
+body:not(.domain-amplify) .amplify-only {
+  display: none !important;
 }
 
 .brand-badge {
@@ -350,12 +367,22 @@ body:not([data-theme="dark"]) .brand-logo.dark-only {
   background: transparent;
   border: none;
   color: var(--color-text);
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  padding: 0;
+  transition: background-color 0.15s ease;
+}
+.hamburger-btn:hover {
+  background-color: var(--color-surface-sunken);
+}
+.hamburger-btn svg {
+  stroke: var(--color-text);
 }
 
 /* Mobile Drawer */
@@ -373,6 +400,7 @@ body:not([data-theme="dark"]) .brand-logo.dark-only {
   transition: opacity 0.2s ease;
 }
 .mobile-drawer.open {
+  display: block !important;
   opacity: 1;
   pointer-events: auto;
 }
@@ -647,14 +675,30 @@ body:not([data-theme="dark"]) .brand-logo.dark-only {
 /* Responsive Rules for Mobile (< 1024px) */
 @media (max-width: 1023px) {
   .nav-tabs, .header-domain-switcher {
-    display: none;
+    display: none !important;
   }
   .hamburger-btn {
-    display: flex;
+    display: inline-flex !important;
   }
   .header-container {
     height: 60px;
     padding: 0 16px;
+    gap: 8px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .user-profile span {
+    display: none;
+  }
+  .brand-logo-wrap {
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .brand-logo {
+    height: 24px;
+    max-width: 140px;
   }
   .main-content {
     padding: 16px 14px 40px;
@@ -685,5 +729,30 @@ body:not([data-theme="dark"]) .brand-logo.dark-only {
     gap: 8px;
     margin-top: 8px;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    padding: 0 10px;
+  }
+  .brand-badge {
+    display: none;
+  }
+  .brand-logo {
+    height: 22px;
+    max-width: 110px;
+  }
+  .btn-new-link .btn-label {
+    display: none;
+  }
+  .btn-new-link {
+    padding: 6px 10px;
+    min-height: 32px;
+  }
+  .hamburger-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
   }
 }
