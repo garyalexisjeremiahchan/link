@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In — FCC URL Shortener</title>
     <link rel="icon" type="image/svg+xml" href="/static/brand/fcc-app-icon-light.svg">
-    <link rel="stylesheet" href="/static/css/styles.css?v=2.2">
+    <link rel="stylesheet" href="/static/css/styles.css?v=2.3">
     <style>
         body {
             display: flex;
@@ -69,29 +69,7 @@
             width: 20px;
             height: 20px;
         }
-        .dev-box {
-            margin-top: 32px;
-            padding-top: 20px;
-            border-top: 1px dashed var(--color-border);
-            text-align: left;
-        }
-        .dev-badge {
-            display: inline-block;
-            background: var(--gold-100);
-            color: var(--ink-950);
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            padding: 2px 8px;
-            border-radius: var(--radius-pill);
-            margin-bottom: 10px;
-        }
-        .dev-links {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+    </style>
     <script>
         (function() {
             const saved = localStorage.getItem('fcc_theme');
@@ -130,21 +108,6 @@
             </svg>
             Sign in with Google
         </a>
-
-        {% if dev_mode %}
-        <div class="dev-box">
-            <div class="dev-badge">Local Developer Bypass</div>
-            <p style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 12px;">Quickly sign in as predefined roles to test permissions:</p>
-            <div class="dev-links">
-                <a class="btn btn-sm btn-secondary" href="/auth/dev-login?email={{ superadmin_email }}">
-                    Sign in as Super Admin ({{ superadmin_email }})
-                </a>
-                <a class="btn btn-sm btn-secondary" href="/auth/dev-login?email=user@freecomchurch.org">
-                    Sign in as Regular User (user@freecomchurch.org)
-                </a>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </body>
 </html>

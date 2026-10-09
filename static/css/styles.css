@@ -303,6 +303,196 @@ body:not(.domain-amplify) .amplify-only {
   box-shadow: var(--shadow-1);
 }
 
+/* Mobile Vertical Domain Switcher (Prevents bleeding over bounding box) */
+.domain-switcher.mobile-vertical,
+#domainSwitcherMobile {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  border-radius: var(--radius-md) !important;
+  padding: 4px !important;
+  gap: 3px !important;
+  background-color: var(--color-surface-sunken) !important;
+  border: 1px solid var(--color-border) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.domain-switcher.mobile-vertical .domain-pill,
+#domainSwitcherMobile .domain-pill {
+  width: 100% !important;
+  text-align: center !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  box-sizing: border-box !important;
+}
+
+.domain-switcher.mobile-vertical .domain-pill.active,
+#domainSwitcherMobile .domain-pill.active {
+  background-color: var(--color-surface) !important;
+  color: var(--color-primary) !important;
+  box-shadow: var(--shadow-1) !important;
+}
+
+/* User Profile & Dropdown Menu (Desktop) */
+.user-dropdown-wrap {
+  position: relative;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.user-profile:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-1);
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background-color: var(--teal-600);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-profile-name {
+  font-weight: 700;
+  font-size: 13px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-heading);
+}
+
+.dropdown-chevron {
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.user-dropdown-wrap.open .dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 230px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
+  padding: 6px;
+  z-index: 1000;
+  display: none;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+.user-dropdown-wrap.open .user-dropdown-menu {
+  display: block;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-header {
+  padding: 8px 12px 6px;
+}
+
+.dropdown-user-email {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-user-role {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: 4px 0;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-surface-sunken);
+  color: var(--color-text-heading);
+}
+
+.dropdown-item.text-danger {
+  color: #D92D20;
+}
+
+.dropdown-item.text-danger:hover {
+  background-color: #FEE4E2;
+  color: #B42318;
+}
+
+[data-theme="dark"] .dropdown-item.text-danger:hover {
+  background-color: #381A18;
+  color: #FDA29B;
+}
+
+.dropdown-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-muted);
+}
+
+.dropdown-item:hover .dropdown-item-icon {
+  color: currentColor;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
@@ -726,8 +916,8 @@ body:not(.domain-amplify) .amplify-only {
   .header-actions {
     gap: 6px;
   }
-  .user-profile span {
-    display: none;
+  .user-dropdown-wrap {
+    display: none !important;
   }
   .brand-logo-wrap {
     gap: 8px;

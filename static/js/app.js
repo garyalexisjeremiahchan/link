@@ -43,16 +43,55 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(theme) {
-    const icon = document.getElementById('themeIcon');
-    if (!icon) return;
-    if (theme === 'dark') {
-        // Sun icon
-        icon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
-    } else {
-        // Moon icon
-        icon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+    const icons = document.querySelectorAll('#themeIcon, .mobile-theme-icon');
+    const label = document.getElementById('themeMenuLabel');
+    const isDark = (theme === 'dark');
+
+    const sunSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+    const moonSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+    icons.forEach(el => {
+        el.innerHTML = isDark ? sunSvg : moonSvg;
+    });
+
+    if (label) {
+        label.textContent = isDark ? 'Light Theme' : 'Dark Theme';
     }
 }
+
+// --------------------------------------------------------------------------
+// User Profile Dropdown Menu (Desktop)
+// --------------------------------------------------------------------------
+function toggleUserMenu(e) {
+    if (e) e.stopPropagation();
+    const wrap = document.getElementById('userDropdownWrap');
+    if (!wrap) return;
+    const isOpen = wrap.classList.toggle('open');
+    const profile = wrap.querySelector('.user-profile');
+    if (profile) profile.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('userDropdownWrap');
+    if (wrap && wrap.classList.contains('open')) {
+        if (!wrap.contains(e.target)) {
+            wrap.classList.remove('open');
+            const profile = wrap.querySelector('.user-profile');
+            if (profile) profile.setAttribute('aria-expanded', 'false');
+        }
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const wrap = document.getElementById('userDropdownWrap');
+        if (wrap && wrap.classList.contains('open')) {
+            wrap.classList.remove('open');
+            const profile = wrap.querySelector('.user-profile');
+            if (profile) profile.setAttribute('aria-expanded', 'false');
+        }
+    }
+});
 
 // --------------------------------------------------------------------------
 // Mobile Drawer
