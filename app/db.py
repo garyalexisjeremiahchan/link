@@ -60,14 +60,17 @@ async def init_db():
 
         # Remove or clean up unmanaged or portal domains (e.g. link.gajc.site)
         unmanaged_res = await session.execute(
-            select(Domain).where(~Domain.name.in_(settings.domain_list))
+            select(Domain.id).where(~Domain.name.in_(settings.domain_list))
         )
-        for unmanaged_dom in unmanaged_res.scalars().all():
+        unmanaged_ids = unmanaged_res.scalars().all()
+        if unmanaged_ids:
             await session.execute(
-                delete(UserDomain).where(UserDomain.domain_id == unmanaged_dom.id)
+                delete(UserDomain).where(UserDomain.domain_id.in_(unmanaged_ids))
             )
-            await session.delete(unmanaged_dom)
-        await session.commit()
+            await session.execute(
+                delete(Domain).where(Domain.id.in_(unmanaged_ids))
+            )
+            await session.commit()
         
         # 2. Seed Default Super Admin
         res = await session.execute(select(User).where(User.email == settings.DEFAULT_SUPERADMIN))
