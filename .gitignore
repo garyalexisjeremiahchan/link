@@ -26,3 +26,8 @@ env/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Archives and builds
+*.tar.gz
+dist/
+
