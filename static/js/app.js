@@ -415,7 +415,13 @@ function openCreateModal() {
         }
         document.getElementById('slugPrefixDomain').textContent = `${domSelect.value}/`;
     }
-    document.getElementById('scrapeStatusText').textContent = '';
+    const destInput = document.getElementById('linkFormDestination');
+    if (destInput) destInput.dataset.lastFetchedUrl = '';
+    const scrapeStatus = document.getElementById('scrapeStatusText');
+    if (scrapeStatus) scrapeStatus.textContent = '';
+    const titleStatus = document.getElementById('titleStatusText');
+    if (titleStatus) titleStatus.textContent = '';
+
     modal.classList.add('open');
 }
 
@@ -429,11 +435,16 @@ function openEditModal(linkId) {
     document.getElementById('linkFormDomain').value = link.domain;
     document.getElementById('slugPrefixDomain').textContent = `${link.domain}/`;
     document.getElementById('linkFormSlug').value = link.slug;
-    document.getElementById('linkFormDestination').value = link.destination_url;
+    const destInput = document.getElementById('linkFormDestination');
+    destInput.value = link.destination_url;
+    destInput.dataset.lastFetchedUrl = link.destination_url;
     document.getElementById('linkFormTitle').value = link.title || '';
     document.getElementById('linkFormNotes').value = link.notes || '';
     document.getElementById('linkFormSubmitBtn').textContent = 'Save Changes';
-    document.getElementById('scrapeStatusText').textContent = '';
+    const scrapeStatus = document.getElementById('scrapeStatusText');
+    if (scrapeStatus) scrapeStatus.textContent = '';
+    const titleStatus = document.getElementById('titleStatusText');
+    if (titleStatus) titleStatus.textContent = '';
 
     modal.classList.add('open');
 }
@@ -443,30 +454,118 @@ function closeLinkModal() {
     if (modal) modal.classList.remove('open');
 }
 
-async function handleDestinationBlur() {
+let destTitleAbortController = null;
+let destTitleDebounceTimer = null;
+
+function normalizeUrlForFetch(raw) {
+    let val = (raw || '').trim();
+    if (!val) return '';
+    if (!val.startsWith('http://') && !val.startsWith('https://')) {
+        if (val.includes('.')) {
+            val = 'https://' + val;
+        }
+    }
+    return val;
+}
+
+async function fetchDestinationTitle(force = false) {
     const destInput = document.getElementById('linkFormDestination');
     const titleInput = document.getElementById('linkFormTitle');
     const statusText = document.getElementById('scrapeStatusText');
-    const val = destInput.value.trim();
+    const titleStatus = document.getElementById('titleStatusText');
+    if (!destInput || !titleInput) return;
 
-    if (!val || titleInput.value.trim()) return;
+    let rawVal = destInput.value.trim();
+    if (!rawVal) {
+        if (statusText) statusText.textContent = '';
+        if (titleStatus) titleStatus.textContent = '';
+        return;
+    }
+
+    const val = normalizeUrlForFetch(rawVal);
+    if (val !== rawVal && document.activeElement !== destInput) {
+        destInput.value = val;
+    }
+
+    // Skip if unchanged and already fetched
+    if (!force && destInput.dataset.lastFetchedUrl === val) {
+        return;
+    }
+
+    if (destTitleAbortController) {
+        destTitleAbortController.abort();
+    }
+    destTitleAbortController = new AbortController();
+    destInput.dataset.lastFetchedUrl = val;
+
+    const setStatus = (msg, isSuccess = false) => {
+        const color = isSuccess ? 'var(--color-brand, #24704A)' : 'var(--color-text-muted)';
+        if (statusText) {
+            statusText.textContent = msg;
+            statusText.style.color = color;
+        }
+        if (titleStatus) {
+            titleStatus.textContent = msg;
+            titleStatus.style.color = color;
+        }
+    };
+
+    setStatus('Fetching page title...');
 
     try {
-        statusText.textContent = 'Fetching page title...';
-        const res = await fetch(`/api/links/preview-metadata?url=${encodeURIComponent(val)}`, { method: 'POST' });
+        const res = await fetch(`/api/links/preview-metadata?url=${encodeURIComponent(val)}`, {
+            method: 'POST',
+            signal: destTitleAbortController.signal
+        });
         if (res.ok) {
             const data = await res.json();
-            if (data.title && !titleInput.value.trim()) {
+            if (data.title) {
+                // Populate the title while keeping the input fully editable
                 titleInput.value = data.title;
-                statusText.textContent = 'Title auto-filled!';
-                setTimeout(() => { statusText.textContent = ''; }, 3000);
+                setStatus('✓ Title auto-filled', true);
+                setTimeout(() => {
+                    if (statusText && statusText.textContent.includes('auto-filled')) statusText.textContent = '';
+                    if (titleStatus && titleStatus.textContent.includes('auto-filled')) titleStatus.textContent = '';
+                }, 3500);
             } else {
-                statusText.textContent = '';
+                setStatus('');
             }
+        } else {
+            setStatus('');
         }
-    } catch {
-        statusText.textContent = '';
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            setStatus('');
+        }
     }
+}
+
+function handleDestinationInput() {
+    clearTimeout(destTitleDebounceTimer);
+    const destInput = document.getElementById('linkFormDestination');
+    const val = (destInput ? destInput.value : '').trim();
+    if (val.startsWith('http://') || val.startsWith('https://') || (val.includes('.') && val.length > 7)) {
+        destTitleDebounceTimer = setTimeout(() => {
+            fetchDestinationTitle();
+        }, 500);
+    }
+}
+
+function handleDestinationChange() {
+    clearTimeout(destTitleDebounceTimer);
+    fetchDestinationTitle();
+}
+
+function handleDestinationBlur() {
+    clearTimeout(destTitleDebounceTimer);
+    fetchDestinationTitle();
+}
+
+function handleDestinationPaste() {
+    clearTimeout(destTitleDebounceTimer);
+    setTimeout(() => {
+        fetchDestinationTitle();
+    }, 40);
 }
 
 function generateSlugClick() {
@@ -969,6 +1068,7 @@ function applyUtmToDestination() {
         if (medium) url.searchParams.set('utm_medium', medium);
         if (campaign) url.searchParams.set('utm_campaign', campaign);
         destInput.value = url.toString();
+        destInput.dataset.lastFetchedUrl = destInput.value;
         showToast('UTM parameters applied');
     } catch (e) {
         alert('Please enter a valid Destination URL first');

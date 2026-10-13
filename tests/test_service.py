@@ -373,3 +373,26 @@ async def test_analytics_endpoints():
         overview = overview_resp.json()
         assert overview["total_links"] >= 1
         assert overview["total_clicks"] >= 2
+
+@pytest.mark.asyncio
+async def test_preview_metadata_endpoint():
+    transport = ASGITransport(app=fastapi_app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # Test preview with query param
+        resp = await client.post("/api/links/preview-metadata?url=https://example.com")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "title" in data
+        assert "favicon_url" in data
+
+        # Test preview with JSON body
+        resp_json = await client.post("/api/links/preview-metadata", json={"url": "https://example.com"})
+        assert resp_json.status_code == 200
+        data_json = resp_json.json()
+        assert "title" in data_json
+
+        # Test preview with GET
+        resp_get = await client.get("/api/links/preview-metadata?url=https://example.com")
+        assert resp_get.status_code == 200
+        data_get = resp_get.json()
+        assert "title" in data_get

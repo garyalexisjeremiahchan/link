@@ -272,9 +272,13 @@ async def get_link_qr_svg(
         headers={"Content-Disposition": f'inline; filename="{link.slug}-qr.svg"'}
     )
 
-@router.post("/preview-metadata")
-async def preview_metadata(url: str = Query(...)):
-    return await fetch_url_metadata(url)
+class PreviewRequest(BaseModel):
+    url: Optional[str] = None
+
+@router.api_route("/preview-metadata", methods=["GET", "POST"])
+async def preview_metadata(url: Optional[str] = Query(None), req: Optional[PreviewRequest] = None):
+    target_url = url or (req.url if req else None) or ""
+    return await fetch_url_metadata(target_url)
 
 @router.post("/import-rebrandly-csv")
 async def import_rebrandly_csv(
