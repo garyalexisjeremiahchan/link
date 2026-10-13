@@ -59,30 +59,25 @@ ssh "$VM" "
   # Check if SSL certificate exists for link.gajc.site
   if ! sudo test -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem; then
     echo 'SSL cert for link.gajc.site not found. Requesting via Certbot webroot...'
-    
-    # Ensure temporary HTTP-only config is in place so certbot challenge passes
-    cat <<'EOF' > pentecost/nginx/conf.d/link.conf
-server {
-    listen 80;
-    server_name link.gajc.site;
-    location /.well-known/acme-challenge/ {
-        root /var/www/pentecost;
-    }
-}
-EOF
-    docker exec pentecost-nginx-1 nginx -t && docker exec pentecost-nginx-1 nginx -s reload
-    
     sudo certbot certonly --webroot -w /home/azureuser/pentecost/web \
       -d link.gajc.site \
       --non-interactive --agree-tos --register-unsafely-without-email || true
   fi
 
+  # Check if SSL certificate exists for amp.ad
+  if ! sudo test -f /etc/letsencrypt/live/amp.ad/fullchain.pem; then
+    echo 'SSL cert for amp.ad not found. Requesting via Certbot webroot...'
+    sudo certbot certonly --webroot -w /home/azureuser/pentecost/web \
+      -d amp.ad -d www.amp.ad \
+      --non-interactive --agree-tos --register-unsafely-without-email || true
+  fi
+
   # Deploy production Nginx configuration
-  if sudo test -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem; then
+  if sudo test -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem && sudo test -f /etc/letsencrypt/live/amp.ad/fullchain.pem; then
     cp $REMOTE_DIR/deploy/nginx-link.conf pentecost/nginx/conf.d/link.conf
     echo 'Copied full HTTPS Nginx config to pentecost/nginx/conf.d/link.conf'
   else
-    echo 'Warning: SSL certificate could not be issued yet. Keeping HTTP-only config.'
+    echo 'Warning: SSL certificate(s) missing. Please verify certbot output.'
   fi
 
   # Safely test and reload Nginx

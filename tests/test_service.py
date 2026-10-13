@@ -198,10 +198,18 @@ async def test_short_link_lifecycle_and_slug_collision():
         assert len(items) == 1
         assert items[0]["destination_url"] == "https://freecomchurch.org/events/easter-updated"
 
-        # 6. Test Redirection for fcc.li/easter2026
+        # 6. Test Redirection for fcc.li/easter2026 and amp.ad/easter2026
         redir_resp = await client.get("/easter2026", headers={"Host": "fcc.li"}, follow_redirects=False)
         assert redir_resp.status_code == 302
         assert redir_resp.headers["location"] == "https://freecomchurch.org/events/easter-updated"
+
+        redir_amp_resp = await client.get("/easter2026", headers={"Host": "amp.ad"}, follow_redirects=False)
+        assert redir_amp_resp.status_code == 302
+        assert redir_amp_resp.headers["location"] == "https://amplifyasiapacific.org/easter"
+
+        redir_amp_www_resp = await client.get("/easter2026", headers={"Host": "www.amp.ad"}, follow_redirects=False)
+        assert redir_amp_www_resp.status_code == 302
+        assert redir_amp_www_resp.headers["location"] == "https://amplifyasiapacific.org/easter"
 
         # 7. Test QR PNG & SVG Generation (FCC Dove emblem for fcc.li)
         qr_png_resp = await client.get(f"/api/links/{link_id}/qr.png", cookies={"fcc_session": cookie})

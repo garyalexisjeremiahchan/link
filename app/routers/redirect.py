@@ -16,7 +16,10 @@ def clean_host(host_header: Optional[str]) -> str:
     if not host_header:
         return "link.gajc.site"
     # Remove port if present (e.g., localhost:8000 -> localhost)
-    return host_header.split(":")[0].strip().lower()
+    h = host_header.split(":")[0].strip().lower()
+    if h.startswith("www."):
+        h = h[4:]
+    return h
 
 async def log_click_event_background(
     link_id: int,
