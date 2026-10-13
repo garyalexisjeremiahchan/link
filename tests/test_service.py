@@ -37,6 +37,7 @@ async def override_get_db():
             await session.close()
 
 fastapi_app.dependency_overrides[get_db] = override_get_db
+settings.DEV_AUTH_BYPASS = True
 
 import app.db as db_mod
 import app.routers.redirect as redir_mod
