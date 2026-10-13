@@ -57,7 +57,7 @@ ssh "$VM" "
   mkdir -p pentecost/nginx/conf.d
 
   # Check if SSL certificate exists for link.gajc.site
-  if [[ ! -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem ]]; then
+  if ! sudo test -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem; then
     echo 'SSL cert for link.gajc.site not found. Requesting via Certbot webroot...'
     
     # Ensure temporary HTTP-only config is in place so certbot challenge passes
@@ -78,7 +78,7 @@ EOF
   fi
 
   # Deploy production Nginx configuration
-  if [[ -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem ]]; then
+  if sudo test -f /etc/letsencrypt/live/link.gajc.site/fullchain.pem; then
     cp $REMOTE_DIR/deploy/nginx-link.conf pentecost/nginx/conf.d/link.conf
     echo 'Copied full HTTPS Nginx config to pentecost/nginx/conf.d/link.conf'
   else
