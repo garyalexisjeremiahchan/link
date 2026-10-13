@@ -51,16 +51,16 @@ def generate_qr_svg(
             m_w = re.search(r'width="(\d+(?:\.\d+)?)"', svg_str)
             if m_w:
                 w = float(m_w.group(1))
-                cx = cy = w / 2.0
                 badge_size = w * 0.24
-                r = badge_size / 2.0
-                inner_size = badge_size * (0.72 if is_amplify else 0.75)
-                inner_r = inner_size / 2.0
+                offset = (w - badge_size) / 2.0
+                scale_ratio = 0.75 if is_amplify else 0.80
+                inner_size = badge_size * scale_ratio
+                inner_offset = (w - inner_size) / 2.0
                 b64 = base64.b64encode(logo_path.read_bytes()).decode("ascii")
                 badge_svg = (
                     f'  <g class="qr-badge" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
-                    f'    <circle cx="{cx:.2f}" cy="{cy:.2f}" r="{r:.2f}" fill="{light_color}" stroke="{dark_color}" stroke-width="2" />\n'
-                    f'    <image x="{(cx - inner_r):.2f}" y="{(cy - inner_r):.2f}" width="{inner_size:.2f}" height="{inner_size:.2f}" '
+                    f'    <rect x="{offset:.2f}" y="{offset:.2f}" width="{badge_size:.2f}" height="{badge_size:.2f}" fill="{light_color}" />\n'
+                    f'    <image x="{inner_offset:.2f}" y="{inner_offset:.2f}" width="{inner_size:.2f}" height="{inner_size:.2f}" '
                     f'href="data:image/png;base64,{b64}" xlink:href="data:image/png;base64,{b64}" />\n'
                     f'  </g>\n</svg>'
                 )
@@ -92,24 +92,15 @@ def generate_qr_png(
     ).convert("RGBA")
 
     if embed_logo:
-        # Create a clean circular badge in the center
+        # Create a clean borderless square badge in the center
         badge_size = int(img.size[0] * 0.24)
-        badge = Image.new("RGBA", (badge_size, badge_size), (255, 255, 255, 255))
-        
-        # Draw soft rounded boundary for badge
-        mask = Image.new("L", (badge_size, badge_size), 0)
-        draw = ImageDraw.Draw(mask)
-        draw.ellipse((0, 0, badge_size, badge_size), fill=255)
-        
-        # Add a subtle border
-        border_draw = ImageDraw.Draw(badge)
-        border_draw.ellipse((0, 0, badge_size - 1, badge_size - 1), outline=dark_color, width=2)
+        badge = Image.new("RGBA", (badge_size, badge_size), (*light_color, 255))
         
         logo_path, is_amplify = get_domain_brand(domain_name)
 
         if logo_path.exists():
             logo = Image.open(logo_path).convert("RGBA")
-            scale_ratio = 0.72 if is_amplify else 0.75
+            scale_ratio = 0.75 if is_amplify else 0.80
             inner_size = int(badge_size * scale_ratio)
             logo = logo.resize((inner_size, inner_size), Image.Resampling.LANCZOS)
             offset = ((badge_size - inner_size) // 2, (badge_size - inner_size) // 2)
@@ -117,18 +108,16 @@ def generate_qr_png(
         else:
             # Stylized Dove Gold core emblem fallback
             gold = (248, 220, 41, 255)  # Dove Gold #F8DC29
-            teal = (28, 118, 120, 255)  # Teal #1C7678
             d_size = int(badge_size * 0.6)
             d_offset = (badge_size - d_size) // 2
-            border_draw.ellipse(
+            border_draw = ImageDraw.Draw(badge)
+            border_draw.rectangle(
                 (d_offset, d_offset, d_offset + d_size, d_offset + d_size),
-                fill=gold,
-                outline=teal,
-                width=2
+                fill=gold
             )
 
         pos = ((img.size[0] - badge_size) // 2, (img.size[1] - badge_size) // 2)
-        img.paste(badge, pos, mask)
+        img.paste(badge, pos)
 
     out = io.BytesIO()
     img.save(out, format="PNG")
