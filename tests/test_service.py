@@ -203,7 +203,7 @@ async def test_short_link_lifecycle_and_slug_collision():
         assert redir_resp.status_code == 302
         assert redir_resp.headers["location"] == "https://freecomchurch.org/events/easter-updated"
 
-        # 7. Test QR PNG & SVG Generation
+        # 7. Test QR PNG & SVG Generation (FCC Dove emblem for fcc.li)
         qr_png_resp = await client.get(f"/api/links/{link_id}/qr.png", cookies={"fcc_session": cookie})
         assert qr_png_resp.status_code == 200
         assert qr_png_resp.headers["content-type"] == "image/png"
@@ -213,6 +213,31 @@ async def test_short_link_lifecycle_and_slug_collision():
         assert qr_svg_resp.status_code == 200
         assert "image/svg" in qr_svg_resp.headers["content-type"]
         assert "<svg" in qr_svg_resp.text
+        assert "qr-badge" in qr_svg_resp.text
+
+        # Test QR generation for amp.ad domain (Amplify logo)
+        amp_create_resp = await client.post(
+            "/api/links",
+            json={
+                "domain": "amp.ad",
+                "slug": "summit2026",
+                "destination_url": "https://amplifyasiapacific.org/summit",
+                "title": "Amplify Summit 2026",
+            },
+            cookies={"fcc_session": cookie}
+        )
+        assert amp_create_resp.status_code == 200
+        amp_link_id = amp_create_resp.json()["id"]
+
+        amp_qr_png_resp = await client.get(f"/api/links/{amp_link_id}/qr.png", cookies={"fcc_session": cookie})
+        assert amp_qr_png_resp.status_code == 200
+        assert amp_qr_png_resp.content.startswith(b"\x89PNG")
+
+        amp_qr_svg_resp = await client.get(f"/api/links/{amp_link_id}/qr.svg", cookies={"fcc_session": cookie})
+        assert amp_qr_svg_resp.status_code == 200
+        assert "qr-badge" in amp_qr_svg_resp.text
+
+        await client.delete(f"/api/links/{amp_link_id}", cookies={"fcc_session": cookie})
 
         # 8. Delete link
         del_resp = await client.delete(f"/api/links/{link_id}", cookies={"fcc_session": cookie})

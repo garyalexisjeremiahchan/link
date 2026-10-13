@@ -265,7 +265,7 @@ async def get_link_qr_svg(
         raise HTTPException(status_code=404, detail="Link not found")
 
     short_url = f"https://{link.domain.name}/{link.slug}?src=qr"
-    svg_content = generate_qr_svg(short_url)
+    svg_content = generate_qr_svg(short_url, domain_name=link.domain.name)
     return Response(
         content=svg_content,
         media_type="image/svg+xml",
